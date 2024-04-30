@@ -9,7 +9,6 @@ import data
 class Sabotage:
     def __init__(self):
 
-
         # all instances of the below string are to clear the screen for use experience
         print("\033c")
 
@@ -44,7 +43,7 @@ class Sabotage:
         print("\n---")
         print(data.NOTES)
 
-    # If a player choses to start the game 
+    # If a player choses to start the game
     def game_details(self):
         print("\033c")
         numbers_question = [
@@ -72,9 +71,9 @@ class Sabotage:
                 {
                     "Name": current_player,
                     "Location": 0,
-                    "Item(s)": "",
+                    "Item(s)": [],
                     "Status": [],
-                    "Place": "",
+                    "Place": None,
                 }
             )
 
@@ -106,9 +105,60 @@ class Sabotage:
             "duration": space["duration"],
         }
 
+    def apply_stun(self, player):
+        print("Player is stunned, turn skipped.")
+        del player["Status"][player["Status"].index("Stun")]
+
+    def apply_steamroller(self, player):
+        radius = [
+            current_player["Location"],
+            current_player["Location"] + 15,
+        ]
+        current_player["Location"] += 15
+        for radius in range(
+            current_player["Location"], current_player["Location"] + 15
+        ):
+            if self.item_locations[radius]:
+                self.item_locations[radius] = ""
+            else:
+                continue
+
+        for player_hit in self.game_data["player_data"]:
+            if player_hit["Name"] == current_player["Name"]:
+                continue
+            else:
+                if random.randrange(1, 5) == 4:
+                    if (
+                        "Steam Roller" in player_hit["Status"]
+                        or "Midas Touch" in player_hit["Status"]
+                    ):
+                        print(
+                            current_player["Name"],
+                            "misses",
+                            player_hit["Name"],
+                            ".",
+                        )
+                        pass
+                    else:
+                        print(
+                            current_player["Name"],
+                            hits,
+                            player_hit["Name"] + "!",
+                        )
+                        player_hit["Satus"].append("Stun")
+
+    def dice_roll(self, player):
+        if "Slow" in player["Status"]:
+            roll = random.randrange(1, 4)
+        else:
+            roll = random.randrange(1, 7)
+
+        print(f"You rolled {roll}!")
+        return roll
+
     def game_time(self):
         print("\033c")
-        # when items are placed on the board  
+        # when items are placed on the board
         self.item_locations = {}
         for construct_items in range(1, self.game_data["duration"] + 1):
             self.item_locations[construct_items] = ""
@@ -121,53 +171,42 @@ class Sabotage:
             # stunned players will have to skip a turn
             # if stun is found in the status list, it will be removed.
             for current_player in self.game_data["player_data"]:
+                current_player["Item(s)"] = ["Double"]
                 if "Stun" in current_player["Status"]:
-                    print("Player is stunned, turn skipped.")
-                    del current_player["Status"][current_player["Status"].index("Stun")]
+                    self.apply_stun(current_player)
                     continue
 
                 # steam roller pushes the player 15 players forward and destroys all items in its way
                 # has a 25% chance of hitting a player if a player is in the movement range
                 elif "Steam Roller" in current_player["Status"]:
-                    radius = [
-                        current_player["Location"],
-                        current_player["Location"] + 15,
-                    ]
-                    current_player["Location"] += 15
-                    for radius in range(
-                        current_player["Location"], current_player["Location"] + 15
-                    ):
-                        if self.item_locations[radius]:
-                            self.item_locations[radius] = ""
-                        else:
-                            continue
-
-                    for player_hit in self.game_data["player_data"]:
-                        if player_hit["Name"] == current_player["Name"]:
-                            continue
-                        else:
-                            if random.randrange(1, 5) == 4:
-                                if (
-                                    "Steam Roller" in player_hit["Status"]
-                                    or "Midas Touch" in player_hit["Status"]
-                                ):
-                                    print(
-                                        current_player["Name"],
-                                        "misses",
-                                        player_hit["Name"],
-                                        ".",
-                                    )
-                                    pass
-                                else:
-                                    player_hit["Satus"].append("Stun")
+                    self.apply_steamroller(current_player)
 
                 getpass.getpass(prompt="Press Enter to roll")
 
-                if "Slow" in current_player["Status"]:
-                    roll = random.randrange(1, 4)
-                else:
-                    roll = random.randrange(1, 7)
+                roll_amount = self.dice_roll(current_player)
 
+                if current_player["Item(s)"]:
+                    item_options = list(current_player["Item(s)"])
+                    questions = [
+                        inquirer.List(
+                            "option",
+                            message="What size do you need?",
+                            choices=item_options + ["Pass"],
+                        ),
+                    ]
+
+                    item_answer = inquirer.prompt(questions)
+                    if item_answer["option"] == "Pass":
+                        continue
+                    elif item_answer["option"] == "Double":
+                        double_roll = self.dice_roll(current_player)
+                        print(f"Which brings your total to {double_roll + roll_amount}")
+                        roll_amount += double_roll
+
+                else:
+                    pass
+
+                current_player["Location"] += roll_amount
 
             break
 
