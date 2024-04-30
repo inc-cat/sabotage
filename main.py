@@ -1,5 +1,4 @@
 import inquirer
-import json
 import random
 import pandas as pd
 import getpass
@@ -110,42 +109,44 @@ class Sabotage:
         del player["Status"][player["Status"].index("Stun")]
 
     def apply_steamroller(self, player):
-        radius = [
-            current_player["Location"],
-            current_player["Location"] + 15,
-        ]
-        current_player["Location"] += 15
-        for radius in range(
-            current_player["Location"], current_player["Location"] + 15
-        ):
+        for radius in range(player["Location"], player["Location"] + 15):
             if self.item_locations[radius]:
                 self.item_locations[radius] = ""
-            else:
-                continue
 
         for player_hit in self.game_data["player_data"]:
-            if player_hit["Name"] == current_player["Name"]:
+            if player_hit["Name"] == player["Name"]:
                 continue
+            if (
+                player_hit["Location"] < player["Location"]
+                or player["Location"] + 15 >= player_hit["Location"]
+            ):
+                continue
+
+
+            if (
+                random.randrange(1, 5) == 4 and 
+                "Steam Roller" not in player_hit["Status"]
+                and "Midas Touch" not in player_hit["Status"]
+            ):
+                print(
+                    player["Name"],
+                    "hits",
+                    player_hit["Name"] + "!",
+                )
+                player_hit["Status"].append("Stun")
+                
             else:
-                if random.randrange(1, 5) == 4:
-                    if (
-                        "Steam Roller" in player_hit["Status"]
-                        or "Midas Touch" in player_hit["Status"]
-                    ):
-                        print(
-                            current_player["Name"],
-                            "misses",
-                            player_hit["Name"],
-                            ".",
-                        )
-                        pass
-                    else:
-                        print(
-                            current_player["Name"],
-                            hits,
-                            player_hit["Name"] + "!",
-                        )
-                        player_hit["Satus"].append("Stun")
+                print(
+                    player["Name"],
+                    "misses",
+                    player_hit["Name"],
+                    ".",
+                )
+                
+
+        player["Location"] += 15
+        status_updater = player["Status"].index("Steam Roller")
+        del player["Status"][status_updater]
 
     def dice_roll(self, player):
         if "Slow" in player["Status"]:
@@ -202,6 +203,8 @@ class Sabotage:
                         double_roll = self.dice_roll(current_player)
                         print(f"Which brings your total to {double_roll + roll_amount}")
                         roll_amount += double_roll
+                    elif item_answer["option"] == "Steam Roller":
+                        current_player["Status"] = ["Steam Roller", "Steam Roller"]
 
                 else:
                     pass
