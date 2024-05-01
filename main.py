@@ -104,18 +104,24 @@ class Sabotage:
             "duration": space["duration"],
         }
 
+    # If stun is applied to a player through items, this will be triggered
+    # used to skip turn of current player
     def apply_stun(self, player):
         print("Player is stunned, turn skipped.")
         del player["Status"][player["Status"].index("Stun")]
 
     def apply_steamroller(self, player):
+        # Goes through the range of the area affected by the steam roller item
         for radius in range(player["Location"], player["Location"] + 15):
+            # Removes all items from the players current spot to 15 spots ahead
             if self.item_locations[radius]:
                 self.item_locations[radius] = ""
 
         for player_hit in self.game_data["player_data"]:
+            # Does not progress if it is selecting the current player
             if player_hit["Name"] == player["Name"]:
                 continue
+            # Will not progress if player is outside the range
             if (
                 player_hit["Location"] < player["Location"]
                 or player["Location"] + 15 >= player_hit["Location"]
@@ -134,7 +140,7 @@ class Sabotage:
                     player_hit["Name"] + "!",
                 )
                 player_hit["Status"].append("Stun")
-                
+
             else:
                 print(
                     player["Name"],
@@ -156,6 +162,26 @@ class Sabotage:
 
         print(f"You rolled {roll}!")
         return roll
+
+    def apply_slow(self, player):
+        affected_players = []
+        for slow_select in self.game_data["player_data"]:
+            if slow_select["Name"] == player["Name"]:
+                continue
+            else:
+                affected_players.append(slow_select)
+
+        affected_player.sort(key=lambda location: location["Place"], reverse=True)
+        slow_given = 1
+        for supply_slow in affected_players:
+            for slow_count in range(slow_given):
+                affected_players["Status"].append("Slow")
+            slow_given +=1
+
+        item_updater = player["Item(s)"].index("Slow")
+        del player["Item(s)"][item_updater]
+
+
 
     def game_time(self):
         print("\033c")
