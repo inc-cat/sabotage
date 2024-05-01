@@ -81,7 +81,7 @@ class Sabotage:
             inquirer.Checkbox(
                 "items",
                 message="Which items are allowed to be used?",
-                choices=["Brown", "Blue", "Yellow"],
+                choices=["Double", "Magnet", "Midas Touch", "Oil Spill", "Steam Roller"],
             ),
         ]
         items = inquirer.prompt(items_question)
@@ -128,10 +128,9 @@ class Sabotage:
             ):
                 continue
 
-
             if (
-                random.randrange(1, 5) == 4 and 
-                "Steam Roller" not in player_hit["Status"]
+                random.randrange(1, 5) == 4
+                and "Steam Roller" not in player_hit["Status"]
                 and "Midas Touch" not in player_hit["Status"]
             ):
                 print(
@@ -148,7 +147,6 @@ class Sabotage:
                     player_hit["Name"],
                     ".",
                 )
-                
 
         player["Location"] += 15
         status_updater = player["Status"].index("Steam Roller")
@@ -176,12 +174,69 @@ class Sabotage:
         for supply_slow in affected_players:
             for slow_count in range(slow_given):
                 affected_players["Status"].append("Slow")
-            slow_given +=1
+            slow_given += 1
 
         item_updater = player["Item(s)"].index("Slow")
         del player["Item(s)"][item_updater]
 
+    def apply_midastouch(self, player):
+        getpass.getpass(prompt="Press Enter to roll again")
+        midastouch_updater = player["Status"].index("Midas Touch")
+        del player["Status"][midastouch_updater]
+        midas_roll = random.randrange(1, 4)
+        print(f"You rolled {midas_roll}")
+        return midas_roll
 
+    def apply_oilspill(self, player):
+        oil_question = [
+            inquirer.List(
+                "oil_spill",
+                message="How will you throw?",
+                choices=["Forwards", "Backwards"],
+            ),
+        ]
+
+        oil = inquirer.prompt(oil_question)["oil_spill"]
+
+        player_location = int(player["Location"])
+        if oil == "Forwards":
+            self.item_location[player_location + 8] = "Oil Spill"
+        elif oil == "backwards":
+            self.item_location[player_location - 1] = "Oil Spill"
+
+    def apply_magnet(self, player):
+        affected_players = [
+            p
+            for p in self.game_data["player_data"]
+            if player["Location"] < p["Location"] <= player["Location"] + 14
+        ]
+
+        if affected_players:
+            affected_players.sort(key=lambda location: location["Location"])
+
+            hit_chance = random.randrange(0, 4)
+            if (
+                hit_chance == 0
+                or "Midas Touch" in affected_players[0]["Status"]
+                or "Steam Roller" in affected_players[0]["Status"]
+            ):
+                print(
+                    f"The magnet fails to hit {affected_players[0]['Name']} and crashes!"
+                )
+            else:
+                print(
+                    f"The magnet hits {affected_players[0]['Name']} and inflicts stun!"
+                )
+
+                affected_players[0]["Status"].append("Stun")
+        else:
+            magnet_throw = player["Location"] + 14
+            self.item_locations[magnet_throw] = "Magnet"
+
+        magnet_updater = player["Item(s)"].index("Magnet")
+        del player["Item(s)"][magnet_updater]
+
+        
 
     def game_time(self):
         print("\033c")
@@ -198,7 +253,6 @@ class Sabotage:
             # stunned players will have to skip a turn
             # if stun is found in the status list, it will be removed.
             for current_player in self.game_data["player_data"]:
-                current_player["Item(s)"] = ["Double"]
                 if "Stun" in current_player["Status"]:
                     self.apply_stun(current_player)
                     continue
@@ -211,6 +265,10 @@ class Sabotage:
                 getpass.getpass(prompt="Press Enter to roll")
 
                 roll_amount = self.dice_roll(current_player)
+
+                if "Midas Touch" in current_player["Status"]:
+                    midas_roller = self.apply_midastouch(current_player)
+                    roll_amount += midas_roller
 
                 if current_player["Item(s)"]:
                     item_options = list(current_player["Item(s)"])
@@ -231,6 +289,14 @@ class Sabotage:
                         roll_amount += double_roll
                     elif item_answer["option"] == "Steam Roller":
                         current_player["Status"] = ["Steam Roller", "Steam Roller"]
+                    elif item_answer["option"] == "Midas Touch":
+                        current_player["Status"] = [
+                            "Midas Touch",
+                            "Midas Touch",
+                            "Midas Touch",
+                        ]
+                    elif item_answer["option"] == "Oil Spill":
+                        self.apply_oilspill(current_player)
 
                 else:
                     pass
