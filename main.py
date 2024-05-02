@@ -81,7 +81,14 @@ class Sabotage:
             inquirer.Checkbox(
                 "items",
                 message="Which items are allowed to be used?",
-                choices=["Double", "Magnet", "Midas Touch", "Oil Spill", "Steam Roller"],
+                choices=[
+                    "Bowling Ball",
+                    "Double",
+                    "Magnet",
+                    "Midas Touch",
+                    "Oil Spill",
+                    "Steam Roller",
+                ],
             ),
         ]
         items = inquirer.prompt(items_question)
@@ -236,7 +243,43 @@ class Sabotage:
         magnet_updater = player["Item(s)"].index("Magnet")
         del player["Item(s)"][magnet_updater]
 
-        
+    def apply_bowlingball(self, player):
+        affected_players = [
+            p
+            for p in self.game_data["player_data"]
+            if player["Location"] < p["Location"]
+        ]
+
+        if affected_players:
+            affected_players.sort(
+                key=lambda location: location["Location"], reverse=True
+            )
+
+        outcome_strings = []
+        chance = 4
+        first_player = True
+
+        for bowling_hit in affected_players:
+            if first_player:
+                chance_first = random.randrange(1, 5)
+                if chance_first < 4:
+                    bowling_hit["Status"] = ["Stun"]
+                    outcome_strings.append(
+                        f"{bowling_hit['Name']} was hit and is now stunned!"
+                    )
+                else:
+                    outcome_strings.append(f"{bowling_hit['Name']} dodged!")
+                first_player = False
+            else:
+                chance_after = random.randrange(0, chance)
+                if chance == 0:
+                    outcome_strings.append(
+                        f"{bowling_hit['Name']} was hit and is now stunned!"
+                    )
+                else:
+                    outcome_strings.append(f"{bowling_hit['Name']} dodged!")
+
+                chance *= 2
 
     def game_time(self):
         print("\033c")
@@ -303,6 +346,7 @@ class Sabotage:
 
                 current_player["Location"] += roll_amount
 
+            # print(self.game_data)
             break
 
 
