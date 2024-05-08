@@ -54,6 +54,7 @@ class Sabotage:
         ]
         numbers = inquirer.prompt(numbers_question)
 
+        # holda all player data
         self.player_data = []
         player_names = []
         for player_numbers in range(numbers["players"]):
@@ -87,6 +88,7 @@ class Sabotage:
                     "Magnet",
                     "Midas Touch",
                     "Oil Spill",
+                    "Slow",
                     "Steam Roller",
                 ],
             ),
@@ -98,7 +100,7 @@ class Sabotage:
             inquirer.List(
                 "duration",
                 message="How much to win?",
-                choices=[50, 100, 200, 400],
+                choices=[100, 200, 400, 500],
             ),
         ]
 
@@ -160,6 +162,7 @@ class Sabotage:
         del player["Status"][status_updater]
 
     def dice_roll(self, player):
+        # determining how far the player will move with a rng die roll
         if "Slow" in player["Status"]:
             roll = random.randrange(1, 4)
         else:
@@ -169,6 +172,7 @@ class Sabotage:
         return roll
 
     def apply_slow(self, player):
+        # the slow affect halves the movement speed of the player by halving what a player can roll
         affected_players = []
         for slow_select in self.game_data["player_data"]:
             if slow_select["Name"] == player["Name"]:
@@ -176,6 +180,7 @@ class Sabotage:
             else:
                 affected_players.append(slow_select)
 
+        # the further ahead of the player you are, the longer you have slow applied to you
         affected_player.sort(key=lambda location: location["Place"], reverse=True)
         slow_given = 1
         for supply_slow in affected_players:
@@ -187,6 +192,7 @@ class Sabotage:
         del player["Item(s)"][item_updater]
 
     def apply_midastouch(self, player):
+        # Makes players immune to all attacks and gives players an extra roll from 1 to 3
         getpass.getpass(prompt="Press Enter to roll again")
         midastouch_updater = player["Status"].index("Midas Touch")
         del player["Status"][midastouch_updater]
@@ -195,6 +201,8 @@ class Sabotage:
         return midas_roll
 
     def apply_oilspill(self, player):
+        # player can choose to throw oil forward or backwards tactically to attack other players or defend
+        # forward throws 8 spaces ahead and backward puts it 1 behind.
         oil_question = [
             inquirer.List(
                 "oil_spill",
@@ -207,20 +215,25 @@ class Sabotage:
 
         player_location = int(player["Location"])
         if oil == "Forwards":
-            self.item_location[player_location + 8] = "Oil Spill"
+            self.item_locations[player_location + 8] = "Oil Spill"
         elif oil == "backwards":
-            self.item_location[player_location - 1] = "Oil Spill"
+            self.item_locations[player_location - 1] = "Oil Spill"
+
+        oil_index = player["Item(s)"].index("Oil Spill")
+        del player["Item(s)"][oil_index]
 
     def apply_magnet(self, player):
+        # this will seek out players within a 15 space scope, can be blocked by invincibility status
         affected_players = [
             p
             for p in self.game_data["player_data"]
             if player["Location"] < p["Location"] <= player["Location"] + 14
         ]
-
+        # sorts list from bottom to top position
         if affected_players:
             affected_players.sort(key=lambda location: location["Location"])
 
+            # decides with a 1 in 4 chance if a player is stunned
             hit_chance = random.randrange(0, 4)
             if (
                 hit_chance == 0
@@ -240,10 +253,12 @@ class Sabotage:
             magnet_throw = player["Location"] + 14
             self.item_locations[magnet_throw] = "Magnet"
 
+        # removes status after use
         magnet_updater = player["Item(s)"].index("Magnet")
         del player["Item(s)"][magnet_updater]
 
     def apply_bowlingball(self, player):
+        # designed to hit all players in front of user to enforce stun for 1 turn
         affected_players = [
             p
             for p in self.game_data["player_data"]
@@ -255,6 +270,8 @@ class Sabotage:
                 key=lambda location: location["Location"], reverse=True
             )
 
+        # the chance of being hit is less with every player that is ahead.
+        # starting with the player in 1st having a 3 in 4 chance of being hit
         outcome_strings = []
         chance = 4
         first_player = True
@@ -281,8 +298,89 @@ class Sabotage:
 
                 chance *= 2
 
+    def item_picker(self, player):
+        # when a player lands on a space that is a multiple of 15 the player can pick an item up to affect the game
+        player_position = [p for p in self.game_data["player_data"]]
+
+        player_position.sort(key=lambda location: location["Location"], reverse=True)
+
+        if player_position[-1]["Name"] == player["Name"]:
+            if "Oil Spill" in self.game_data["items"]:
+                player["Item(s)"].append("Oil Spill")
+                return
+            else:
+                return
+
+        first_position = player_position[-1]["Location"]
+        second_position = None
+        for position_difference in player_position:
+            if position_difference["Name"] == player["Name"]:
+                second_position = int(position_difference["Location"])
+                break
+
+        difference = abs(first_position - second_position)
+        # items are distributed based on your position
+        # the further away from first you are, the better the items you will receive
+        item_distribution = None
+        if difference < 10:
+            item_distribution = {"Double": 1, "Magnet": 1, "Oil Spill": 2}
+        elif difference < 20:
+            item_distribution = {"Double": 1, "Magnet": 1, "Oil Spill": 1}
+        elif difference < 40:
+            item_distribution = {"Double": 2, "Magnet": 2, "Midas Touch": 1}
+        elif difference < 60:
+            item_distribution = {
+                "Double": 3,
+                "Magnet": 1,
+                "Midas Touch": 4,
+                "Bowling Ball": 1,
+            }
+        elif difference < 75:
+            item_distribution = {
+                "Double": 2,
+                "Midas Touch": 4,
+                "Bowling Ball": 2,
+                "Steam Roller": 1,
+            }
+        elif difference < 100:
+            item_distribution = {
+                "Double": 1,
+                "Midas Touch": 3,
+                "Bowling Ball": 2,
+                "Steam Roller": 1,
+                "Slow": 1,
+            }
+        elif difference >= 100:
+            item_distribution = {
+                "Midas Touch": 1,
+                "Bowling Ball": 1,
+                "Steam Roller": 2,
+                "Slow": 2,
+            }
+
+        item_keys = list(item_distribution.keys())
+
+        print(item_distribution)
+        print(self.game_data["items"])
+
+        item_push = []
+        for allocate_items in item_keys:
+            if allocate_items in self.game_data["items"]:
+                for add_probability in range(item_distribution[allocate_items]):
+                    item_push.append(allocate_items)
+
+        print(item_push)
+
+        if item_push:
+            given_item = random.choice(item_push)
+            print(f'{player["Name"]} picked up {given_item}!')
+            player["Item(s)"].append(given_item)
+        else:
+            return
+
     def game_time(self):
         print("\033c")
+        self.final_positions = []
         # when items are placed on the board
         self.item_locations = {}
         for construct_items in range(1, self.game_data["duration"] + 1):
@@ -313,12 +411,20 @@ class Sabotage:
                     midas_roller = self.apply_midastouch(current_player)
                     roll_amount += midas_roller
 
+                current_player["Location"] += roll_amount
+
+                if (
+                    current_player["Location"] % 15 == 0
+                    and len(current_player["Item(s)"]) < 3
+                ):
+                    self.item_picker(current_player)
+
                 if current_player["Item(s)"]:
                     item_options = list(current_player["Item(s)"])
                     questions = [
                         inquirer.List(
                             "option",
-                            message="What size do you need?",
+                            message="What item do you want to use?",
                             choices=item_options + ["Pass"],
                         ),
                     ]
@@ -340,14 +446,18 @@ class Sabotage:
                         ]
                     elif item_answer["option"] == "Oil Spill":
                         self.apply_oilspill(current_player)
+                    elif item_answer["option"] == "Magnet":
+                        self.apply_magnet(current_player)
+                    elif item_answer["option"] == "Bowling Ball":
+                        self.apply_bowlingball(current_player)
+                    elif item_answe["option"] == "Slow":
+                        self.apply_slow(current_player)
 
                 else:
                     pass
 
-                current_player["Location"] += roll_amount
-
-            # print(self.game_data)
-            break
+            print(self.game_data)
+            # break
 
 
 run = Sabotage()
