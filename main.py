@@ -378,6 +378,49 @@ class Sabotage:
         else:
             return
 
+
+    def magnet_movement(self, player):
+        # if the magnet is about to go off the board
+        if board_space + 15 > self.game_data["duration"]:
+            for move_forward in range(board_space, self.game_data["duration"]):
+                if self.item_locations[move_forward] == "Oil Spill":
+                    self.item_locations[board_space] = ""
+                    print("The magnet fell into the oil spill and can not progress!")
+                    return
+        
+                for player_check in player:
+                    if player["Location"] == move_forward:
+                        player["Staus"].append("Stun")
+                        print(f"{player['Name']} was hit by the magnet and stunned") 
+                        self.item_locations[board_space] = ""
+                        return
+        else:
+            for move_forward in range(board_space, board_space + 15):
+                if self.item_locations[move_forward] == "Oil Spill":
+                    self.item_locations[board_space] = ""
+                    print("The magnet fell into the oil spill and can not progress!")
+                    return
+
+                for player_check in player:
+                        if player["Location"] == move_forward:
+                            player["Staus"].append("Stun")
+                            print(f"{player['Name']} was hit by the magnet and stunned") 
+                            self.item_locations[board_space] = ""
+                            return
+            new_magnet = board_space + 15
+            self.item_locations[board_space] = ""
+            self.item_locations[new_magnet] = "Magnet"
+
+    def item_board(self, player):
+        for board_space in range(self.game_data["duration"], 0, -1):
+            if not self.item_locations[board_space]:
+                return
+            
+            if self.item_locations[board_space] == "Magnet":
+                self.magnet_movement(player)
+            
+        
+
     def game_time(self):
         print("\033c")
         self.final_positions = []
@@ -389,8 +432,13 @@ class Sabotage:
         # shuffles player order for game
         random.shuffle(self.game_data["player_data"])
 
+        first_turn = True
+
         # while game is in progress, this will loop continually until all players are finished
         while True:
+            if first_turn:
+                pass
+                
             # stunned players will have to skip a turn
             # if stun is found in the status list, it will be removed.
             for current_player in self.game_data["player_data"]:
@@ -457,7 +505,8 @@ class Sabotage:
                     pass
 
             print(self.game_data)
-            # break
+            self.item_board(current_player)
+            first_turn = False
 
 
 run = Sabotage()
