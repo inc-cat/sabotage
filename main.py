@@ -74,6 +74,7 @@ class Sabotage:
                     "Item(s)": [],
                     "Status": [],
                     "Place": None,
+                    "Finished": False
                 }
             )
 
@@ -360,8 +361,6 @@ class Sabotage:
 
         item_keys = list(item_distribution.keys())
 
-        print(item_distribution)
-        print(self.game_data["items"])
 
         item_push = []
         for allocate_items in item_keys:
@@ -369,7 +368,6 @@ class Sabotage:
                 for add_probability in range(item_distribution[allocate_items]):
                     item_push.append(allocate_items)
 
-        print(item_push)
 
         if item_push:
             given_item = random.choice(item_push)
@@ -377,7 +375,6 @@ class Sabotage:
             player["Item(s)"].append(given_item)
         else:
             return
-
 
     def magnet_movement(self, player):
         # if the magnet is about to go off the board
@@ -387,11 +384,11 @@ class Sabotage:
                     self.item_locations[board_space] = ""
                     print("The magnet fell into the oil spill and can not progress!")
                     return
-        
+
                 for player_check in player:
                     if player["Location"] == move_forward:
                         player["Staus"].append("Stun")
-                        print(f"{player['Name']} was hit by the magnet and stunned") 
+                        print(f"{player['Name']} was hit by the magnet and stunned")
                         self.item_locations[board_space] = ""
                         return
         else:
@@ -402,11 +399,11 @@ class Sabotage:
                     return
 
                 for player_check in player:
-                        if player["Location"] == move_forward:
-                            player["Staus"].append("Stun")
-                            print(f"{player['Name']} was hit by the magnet and stunned") 
-                            self.item_locations[board_space] = ""
-                            return
+                    if player["Location"] == move_forward:
+                        player["Staus"].append("Stun")
+                        print(f"{player['Name']} was hit by the magnet and stunned")
+                        self.item_locations[board_space] = ""
+                        return
             new_magnet = board_space + 15
             self.item_locations[board_space] = ""
             self.item_locations[new_magnet] = "Magnet"
@@ -415,15 +412,15 @@ class Sabotage:
         for board_space in range(self.game_data["duration"], 0, -1):
             if not self.item_locations[board_space]:
                 return
-            
+
             if self.item_locations[board_space] == "Magnet":
                 self.magnet_movement(player)
-            
-        
 
     def game_time(self):
         print("\033c")
-        self.final_positions = []
+        self.finished_players = []
+
+
         # when items are placed on the board
         self.item_locations = {}
         for construct_items in range(1, self.game_data["duration"] + 1):
@@ -435,13 +432,53 @@ class Sabotage:
         first_turn = True
 
         # while game is in progress, this will loop continually until all players are finished
+
         while True:
             if first_turn:
-                pass
-                
+                print("Let's go!")
+            elif len(self.finished_players) == len(self.game_data["player_data"]) - 1:
+                print("Game over!")
+                break
+
+            else:
+                print("\033c")
+                names = []
+                locations = []
+                items = []
+                status = []
+                place = []
+                players_location = self.game_data["player_data"]
+                players_location.sort(
+                    key=lambda location: location["Location"], reverse=True
+                )
+                place_count = 1
+
+                for data_info in self.game_data["player_data"]:
+                    names.append(data_info["Name"])
+                    locations.append(data_info["Location"])
+                    items.append(list(dict.fromkeys(data_info["Item(s)"])))
+                    status.append(list(dict.fromkeys(data_info["Status"])))
+
+                for plot in players_location:
+                    place.append(place_count)
+                    place_count += 1
+                table_data = {
+                    "Location": locations,
+                    "Items": items,
+                    "Status": status,
+                    "Place": place,
+                }
+
+                df = pd.DataFrame(table_data, index=names)
+                print(df)
+                print("-_-_-_")
+
             # stunned players will have to skip a turn
             # if stun is found in the status list, it will be removed.
             for current_player in self.game_data["player_data"]:
+                if current_player["Finished"]:
+                    continue
+
                 if "Stun" in current_player["Status"]:
                     self.apply_stun(current_player)
                     continue
@@ -451,7 +488,7 @@ class Sabotage:
                 elif "Steam Roller" in current_player["Status"]:
                     self.apply_steamroller(current_player)
 
-                getpass.getpass(prompt="Press Enter to roll")
+                getpass.getpass(prompt=f"{current_player['Name']}: Press Enter to roll")
 
                 roll_amount = self.dice_roll(current_player)
 
@@ -484,6 +521,8 @@ class Sabotage:
                         double_roll = self.dice_roll(current_player)
                         print(f"Which brings your total to {double_roll + roll_amount}")
                         roll_amount += double_roll
+                        double_ind = current_player["Item(s)"].index("Double")
+                        del current_player["Item(s)"][double_ind]
                     elif item_answer["option"] == "Steam Roller":
                         current_player["Status"] = ["Steam Roller", "Steam Roller"]
                     elif item_answer["option"] == "Midas Touch":
@@ -492,6 +531,8 @@ class Sabotage:
                             "Midas Touch",
                             "Midas Touch",
                         ]
+                        midas_find = current_player["Item(s)"].index("Midas Touch")
+                        del current_player["Item(s)"][midas_find]
                     elif item_answer["option"] == "Oil Spill":
                         self.apply_oilspill(current_player)
                     elif item_answer["option"] == "Magnet":
@@ -504,9 +545,13 @@ class Sabotage:
                 else:
                     pass
 
-            print(self.game_data)
+                if current_player["Location"] >= self.game_data["duration"]:
+                    current_player["Finished"] = True
+                    self.finished_players.append(current_player["Name"])
             self.item_board(current_player)
+            getpass.getpass(prompt=". . .")
             first_turn = False
+                
 
 
 run = Sabotage()
