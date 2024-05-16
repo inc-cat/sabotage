@@ -412,7 +412,7 @@ class Sabotage:
             self.item_locations[board_space] = ""
             self.item_locations[new_magnet] = "Magnet"
 
-    def item_board(self, player): 
+    def item_board(self, player):
         # after every turn this is used to determine whether magnets move across the board
         for board_space in range(self.game_data["duration"], 0, -1):
             if not self.item_locations[board_space]:
@@ -557,6 +557,7 @@ class Sabotage:
             self.item_board(current_player)
             getpass.getpass(prompt=". . .")
             first_turn = False
+
 
 run = Sabotage()
 while True:
