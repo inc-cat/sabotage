@@ -11,12 +11,16 @@ TITLE_TEXT = [
 INTRO_TEXT = """Get from 0 to the end by rolling the dice and seeing where it takes you. Be tactial with your items and use them to get ahead or protect yourself. 
 Here is a run-down of all the items that you may use."""
 
-ITEN_RUNDOWN = [
-    "• Brown: Use this to stop players in their tracks, can be thrown forward or placed behind user. Can be used to stop offensive items hitting player.",
-    "• Blue: Works the same as brown but however there is a blast radius that can affect 2 spaces around the affected square.",
-    "• Yellow: Will travel towards the player directly in front to home in and cause the player to miss one turn if hit. Can also be used to stop offensive items hitting player but can not be placed behind. ",
-    "• Red: Gives the player an extra dice to potentially role double"
+ITEM_RUNDOWN = [
+    "• Oil Spill: Use this to stop players in their tracks, can be thrown forward or placed behind user. Can be used to stop offensive items hitting player.",
+    "• Magnet: Will travel towards the player directly in front to home in and cause the player to miss one turn if hit. Can not be placed behind. ",
+    "• Double: Gives the player an extra dice to potentially role double.",
+    "• Slow: Halves a dice roll for all players in front of the current user.",
+    "• Bowling Ball: Hits all players in front of the current user with a higher chance the further the closer to the front the player is.",
+    "• Midas Touch: Gives the player a three turn burst of invinciblity while giving an extra roll.",
+    "• Steam Roller: Gives you three turns of invincibility and speed, stunning anyone in your path. When this item is used, your other items and status effects are discarded."
   ]
   
 NOTES = "• Items can be obtained by landing on every 15th space."
 
+CREDIT = "The brain child of Anwar Louis!"

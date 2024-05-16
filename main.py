@@ -25,7 +25,7 @@ class Sabotage:
             inquirer.List(
                 "option",
                 message="Where do we go from here?",
-                choices=["Start", "About", "Credits", "Added options", "Quit"],
+                choices=["Start", "About", "Quit"],
             ),
         ]
 
@@ -41,6 +41,9 @@ class Sabotage:
             print(item_scroll)
         print("\n---")
         print(data.NOTES)
+        print("\n---")
+        print(data.CREDIT)
+        getpass.getpass("Press Enter to return!")
 
     # If a player choses to start the game
     def game_details(self):
@@ -555,11 +558,14 @@ class Sabotage:
             getpass.getpass(prompt=". . .")
             first_turn = False
 
-
 run = Sabotage()
-plus = run.options_screen()
-if plus["option"] == "Start":
-    run.game_details()
-    run.game_time()
-elif plus["option"] == "About":
-    run.about()
+while True:
+    plus = run.options_screen()
+    if plus["option"] == "Start":
+        run.game_details()
+        run.game_time()
+    elif plus["option"] == "About":
+        run.about()
+    elif plus["option"] == "Quit":
+        print("!")
+        exit()
