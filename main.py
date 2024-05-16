@@ -74,7 +74,7 @@ class Sabotage:
                     "Item(s)": [],
                     "Status": [],
                     "Place": None,
-                    "Finished": False
+                    "Finished": False,
                 }
             )
 
@@ -299,6 +299,9 @@ class Sabotage:
 
                 chance *= 2
 
+        bowlingball_updater = player["Item(s)"].index("Bowling Ball")
+        del player["Bowling Ball"][bowlingball_updater]
+
     def item_picker(self, player):
         # when a player lands on a space that is a multiple of 15 the player can pick an item up to affect the game
         player_position = [p for p in self.game_data["player_data"]]
@@ -361,13 +364,11 @@ class Sabotage:
 
         item_keys = list(item_distribution.keys())
 
-
         item_push = []
         for allocate_items in item_keys:
             if allocate_items in self.game_data["items"]:
                 for add_probability in range(item_distribution[allocate_items]):
                     item_push.append(allocate_items)
-
 
         if item_push:
             given_item = random.choice(item_push)
@@ -419,7 +420,6 @@ class Sabotage:
     def game_time(self):
         print("\033c")
         self.finished_players = []
-
 
         # when items are placed on the board
         self.item_locations = {}
@@ -500,6 +500,7 @@ class Sabotage:
 
                 if (
                     current_player["Location"] % 15 == 0
+                    and self.game_data["items"]
                     and len(current_player["Item(s)"]) < 3
                 ):
                     self.item_picker(current_player)
@@ -551,7 +552,6 @@ class Sabotage:
             self.item_board(current_player)
             getpass.getpass(prompt=". . .")
             first_turn = False
-                
 
 
 run = Sabotage()
