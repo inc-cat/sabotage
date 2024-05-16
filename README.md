@@ -17,7 +17,7 @@ Race to the end as fast as you can to be the first, but beware of those who want
 Open a terminal and type
 `python main.py`.
 
-## Gane items
+## Game items
 
 - Oil Spill: Use this to stop players in their tracks, can be thrown forward or placed behind user. Can be used to stop offensive items hitting player.
 - Magnet: Will travel towards the player directly in front to home in and cause the player to miss one turn if hit. Can not be placed behind.
