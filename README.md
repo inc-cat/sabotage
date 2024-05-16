@@ -2,6 +2,7 @@
 
 Race to the end as fast as you can to be the first, but beware of those who want to get there before you. Pick up items along the way and use them wisely to boost your chances of success and sabotage others around you!
 
+- Terminal based "board" game
 - Play with 2 to 5 players
 - Choose your game length
 - Cause as much or as little chaos as you want!
