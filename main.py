@@ -309,7 +309,7 @@ class Sabotage:
         # when a player lands on a space that is a multiple of 15 the player can pick an item up to affect the game
         player_position = [p for p in self.game_data["player_data"]]
 
-        player_position.sort(key=lambda location: location["Location"], reverse=True)
+        player_position.sort(key=lambda location: location["Location"])
 
         if player_position[-1]["Name"] == player["Name"]:
             if "Oil Spill" in self.game_data["items"]:
