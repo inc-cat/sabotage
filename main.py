@@ -438,6 +438,11 @@ class Sabotage:
         # while game is in progress, this will loop continually until all players are finished
 
         while True:
+            oil_spills = []
+            for oil in range(1, self.game_data["duration"] + 1):
+                if self.item_locations[oil] == "Oil Spill":
+                    oil_spills.append(oil)
+
             if first_turn:
                 print("Let's go!")
             elif len(self.finished_players) == len(self.game_data["player_data"]) - 1:
@@ -503,6 +508,10 @@ class Sabotage:
 
                 current_player["Location"] += roll_amount
 
+                if current_player["Location"] in oil_spills:
+                    current_player["Status"] = "Stun"
+                    print(f"{current_player['Name']} slipped on an oil spill and has been stunned!")
+
                 if (
                     current_player["Location"] % 15 == 0
                     and self.game_data["items"]
@@ -527,6 +536,7 @@ class Sabotage:
                         double_roll = self.dice_roll(current_player)
                         print(f"Which brings your total to {double_roll + roll_amount}")
                         roll_amount += double_roll
+                        current_player["Location"] += roll_amount
                         double_ind = current_player["Item(s)"].index("Double")
                         del current_player["Item(s)"][double_ind]
                     elif item_answer["option"] == "Steam Roller":
